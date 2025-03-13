@@ -12,9 +12,7 @@ def read_word_list(filename):
         return [line.strip().upper() for line in f]
 
 
-word_list = read_word_list(
-    "/Users/dhruvcharan/Desktop/dsa/12dicts-6.0.2/American/2of12.txt"
-)
+
 
 
 def is_valid_word(word, box_edges):
@@ -235,7 +233,7 @@ def test_solver(todays_word="TIAUWLDBYRMO"):
 
 
 # %%
-def generate_random_test_cases(max_iters):
+def generate_random_test_cases(max_iters,word_list):
     iterations = 0
     while True:
         iterations += 1
@@ -250,51 +248,4 @@ def generate_random_test_cases(max_iters):
             break
 
 
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="Solve Letterboxd or Spell Bee puzzles"
-    )
-    parser.add_argument(
-        "--puzzle",
-        choices=["letterboxd", "spellbee"],
-        required=True,
-        help="Type of puzzle to solve",
-    )
-    parser.add_argument(
-        "--input",
-        required=True,
-        help="For Letterboxd: 12 letters forming 4 sides (e.g., TIAUWLDBYRMO). "
-        + "For Spell Bee: center letter first, followed by other letters (e.g., MAWRING)",
-    )
-    parser.add_argument(
-        "--max-path",
-        type=int,
-        default=3,
-        help="Maximum path length for Letterboxd solutions (default: 2)",
-    )
-    parser.add_argument(
-        "--random",
-        action="store_true",
-        help="Generate random test cases for Letterboxd",
-    )
-    parser.add_argument(
-        "--max-iters",
-        type=int,
-        default=50,
-        help="Maximum iterations for random test cases (default: 50)",
-    )
-
-    args = parser.parse_args()
-
-    if args.random:
-        generate_random_test_cases(max_iters=args.max_iters)
-    elif args.puzzle == "letterboxd":
-        if len(args.input) != 12:
-            print("Error: Letterboxd input must have exactly 12 letters")
-            parser.print_help()
-            exit(1)
-        test_solver(args.input.upper())
-    elif args.puzzle == "spellbee":
-        test_spell_bee_solver(args.input.upper())
+    
