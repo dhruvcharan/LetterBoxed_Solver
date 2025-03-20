@@ -17,8 +17,8 @@ I plan on converting this into a Django Based WebApp that fetches the current pu
 1. Clone the repository:
 
     ```sh
-    git clone https://github.com/yourusername/Letterboxdsolver-django.git
-    cd Letterboxdsolver-django
+    git clone https://github.com/yourusername/LetterBoxed_Solver.git
+    cd Letterboxd_Solver
     ```
 
 2. Install the required packages:
