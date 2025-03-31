@@ -1,9 +1,7 @@
 import argparse
+import sys
 
 from letterboxd_solver import (
-    GraphLetterBoxedSolver,
-    SpellBeeSolver,
-    generate_random_box_edges,
     generate_random_test_cases,
     read_word_list,
     test_solver,
@@ -58,7 +56,7 @@ def main():
         if len(args.input) != 12:
             print("Error: Letterboxd input must have exactly 12 letters")
             parser.print_help()
-            exit(1)
+            sys.exit(1)
         test_solver(word_list, args.input.upper())
     elif args.puzzle == "spellbee":
         test_spell_bee_solver(word_list, args.input.upper())
