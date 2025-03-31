@@ -1,10 +1,20 @@
 import argparse
-from letterboxd_solver import GraphLetterBoxedSolver, generate_random_box_edges,read_word_list,SpellBeeSolver,test_solver,test_spell_bee_solver,generate_random_test_cases
+
+from letterboxd_solver import (
+    GraphLetterBoxedSolver,
+    SpellBeeSolver,
+    generate_random_box_edges,
+    generate_random_test_cases,
+    read_word_list,
+    test_solver,
+    test_spell_bee_solver,
+)
+
 
 def main():
-    
+
     word_list = read_word_list(
-    "/Users/dhruvcharan/Desktop/dsa/12dicts-6.0.2/American/2of12.txt"
+        "/Users/dhruvcharan/Desktop/dsa/12dicts-6.0.2/American/2of12.txt"
     )
 
     parser = argparse.ArgumentParser(
@@ -43,16 +53,15 @@ def main():
     args = parser.parse_args()
 
     if args.random:
-        generate_random_test_cases(max_iters=args.max_iters,word_list=word_list)
+        generate_random_test_cases(max_iters=args.max_iters, word_list=word_list)
     elif args.puzzle == "letterboxd":
         if len(args.input) != 12:
             print("Error: Letterboxd input must have exactly 12 letters")
             parser.print_help()
             exit(1)
-        test_solver(args.input.upper())
+        test_solver(word_list, args.input.upper())
     elif args.puzzle == "spellbee":
-        test_spell_bee_solver(args.input.upper())
-
+        test_spell_bee_solver(word_list, args.input.upper())
 
 
 if __name__ == "__main__":

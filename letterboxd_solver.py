@@ -1,4 +1,5 @@
-# %%
+"""A Class to Solve the NYTimes LetterBoxd and SpellBee Puzzles"""  # %%
+
 import random
 import string
 from collections import defaultdict
@@ -8,11 +9,9 @@ import networkx as nx
 
 
 def read_word_list(filename):
+    """Read the word list"""
     with open(filename, encoding="UTF-8") as f:
         return [line.strip().upper() for line in f]
-
-
-
 
 
 def is_valid_word(word, box_edges):
@@ -91,15 +90,15 @@ class GraphLetterBoxedSolver:
         """
         Visualize Graph using the networkx module
         """
-        G = nx.DiGraph()  # Create a directed graph
+        graph_object = nx.DiGraph()  # Create a directed graph
         for word, connections in self.graph.items():
             for connected_word in connections:
-                G.add_edge(word, connected_word)
+                graph_object.add_edge(word, connected_word)
 
         plt.figure(figsize=(10, 8))
-        pos = nx.spring_layout(G)
+        pos = nx.spring_layout(graph_object)
         nx.draw(
-            G,
+            graph_object,
             pos,
             with_labels=True,
             node_size=2000,
@@ -117,7 +116,7 @@ class GraphLetterBoxedSolver:
         return used_letters == self.letters
 
     def _dfs(self, current_word, used_letters, current_chain):
-
+        """Perform the DFS on the current graph based on the present state"""
         if len(current_chain) > self.max_path_length:
             return []
 
@@ -142,6 +141,7 @@ class GraphLetterBoxedSolver:
         return all_solutions
 
     def solve(self):
+        """Solve the given Class"""
         all_solutions = set()
         # Try every word as the starting point
         for start_word in self.valid_words:
@@ -155,29 +155,36 @@ class GraphLetterBoxedSolver:
 
 
 def unique_char_count(word):
+    """Count the number of unique chars in the word"""
     return len(set(word))
 
 
 # %%
 class SpellBeeSolver:
+    """Solver Class for the NYTimes Spell Bee"""
+
     def __init__(self, list_of_words, letters):
         self.word_list = list_of_words
         self.letters = letters
         self.center_letter = letters[0]
 
     def clean_word_list(self):
+        """Filter word list to allow for compound words to be used"""
         self.word_list = [
             word.replace("-", "").replace(" ", "").replace("'", "")
             for word in self.word_list
         ]
 
     def is_valid_word(self, word):
+        """Check if the current word is a valid solution"""
         return self.center_letter in word and set(word).issubset(self.letters)
 
     def is_pangram(self, word):
+        """Check if Word is Pangram"""
         return set(word) == set(self.letters)
 
     def score(self, word):
+        """Get the Score For the word based on Spell Bee rules"""
         if len(word) < 4:
             return 0
         if len(word) == 4:
@@ -185,6 +192,7 @@ class SpellBeeSolver:
         return len(word) + 7 * (self.is_pangram(word))
 
     def solve(self):
+        """Solve the current Letterboxd puzzle"""
         ans = {}
         self.clean_word_list()
         valid_words = list(filter(self.is_valid_word, self.word_list))
@@ -204,13 +212,14 @@ def generate_random_box_edges():
     return [letters[i : i + 3] for i in range(0, 12, 3)]
 
 
-def test_spell_bee_solver(todays_word="MAWRING"):
+def test_spell_bee_solver(word_list, todays_word="MAWRING"):
+    """Test the solver"""
     letters = list(todays_word)
     spell = SpellBeeSolver(word_list, letters)
     print(spell.solve())
 
 
-def test_solver(todays_word="TIAUWLDBYRMO"):
+def test_solver(todays_word, word_list):
     # Test the LetterBoxd Solver
     """box_edges = [
         ["M", "R", "E"],  # Top edge
@@ -233,7 +242,8 @@ def test_solver(todays_word="TIAUWLDBYRMO"):
 
 
 # %%
-def generate_random_test_cases(max_iters,word_list):
+def generate_random_test_cases(max_iters, word_list):
+    """Generate Some Test Cases to Check Behaviour"""
     iterations = 0
     while True:
         iterations += 1
@@ -246,6 +256,3 @@ def generate_random_test_cases(max_iters,word_list):
             print("Box edges:", box_edges)
             print("Solution:", solutions)
             break
-
-
-    
