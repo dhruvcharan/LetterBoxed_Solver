@@ -21,16 +21,28 @@ I plan on converting this into a Django Based WebApp that fetches the current pu
     cd Letterboxd_Solver
     ```
 
-2. Install the required packages:
+2. Install the required packages using `uv`:
 
     ```sh
-    pip install -r pyproject.toml
+    uv sync
     ```
+
+    - This will install all dependencies specified in the [pyproject.toml] file and manage the dependency graph.
+
+3. Verify the installation:
+
+    ```sh
+    uv doctor
+    ```
+
+    - This command checks for any issues with the dependency graph or environment setup.
+
+---
 
 ### Usage
 
-Run `main.py` to solve the daily NYTimes Letterboxd and SpellBee puzzles. The CLI will prompt you for the type of puzzle and the necessary inputs.
+Run [main.py] using `uv` to ensure the correct virtual environment is activated:
 
 ```sh
-python [main.py]
+uv run python main.py
 ```

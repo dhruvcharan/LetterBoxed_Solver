@@ -2,7 +2,7 @@
 
 import random
 import string
-from collections import defaultdict
+from collections import defaultdict, deque
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -151,6 +151,39 @@ class GraphLetterBoxedSolver:
             print("No solutions found, try a larger path size")
         return all_solutions
 
+    def _bfs(self, start_word):
+        """Perform BFS starting from the given word"""
+        # Queue entries: (current_word, used_letters, current_chain)
+        queue = deque([(start_word, set(start_word), [start_word])])
+        all_solutions = []
+
+        while queue:
+            current_word, used_letters, current_chain = queue.popleft()
+            if len(current_chain) > self.max_path_length:
+                continue
+            if self._all_letters_used(used_letters):
+                all_solutions.append(tuple(current_chain))
+                continue
+            for next_word in self.graph[current_word]:
+                new_letters = set(next_word) - used_letters
+                if new_letters or not used_letters & set(next_word):
+                    new_used_letters = used_letters | set(next_word)
+                    new_chain = current_chain + [next_word]
+                    queue.append((next_word, new_used_letters, new_chain))
+
+        return all_solutions
+
+    def solve_bfs(self):
+        """Solve using BFS from all possible starting words"""
+        all_solutions = set()
+        # Try every word as the starting point
+        for start_word in self.valid_words:
+            solutions = self._bfs(start_word)
+            all_solutions.update(solutions)
+        if len(all_solutions) == 0:
+            print("No solutions found, try a larger path size")
+        return all_solutions
+
     # The box edges are represented as a list of lists of chars
 
 
@@ -232,9 +265,9 @@ def test_solver(todays_word, word_list):
     box_edges = [list(todays_word[i : i + 3]) for i in range(0, len(todays_word), 3)]
 
     # box_edges = generate_random_box_edges()
-    graph_solver = GraphLetterBoxedSolver(word_list, box_edges)
+    graph_solver = GraphLetterBoxedSolver(word_list, box_edges, max_path_length=3)
 
-    solutions = graph_solver.solve()
+    solutions = graph_solver.solve_bfs()
 
     print(f"{len(solutions)} solutions found:")
     for solution in solutions:
@@ -256,3 +289,12 @@ def generate_random_test_cases(max_iters, word_list):
             print("Box edges:", box_edges)
             print("Solution:", solutions)
             break
+
+
+if __name__ == "__main__":
+    word_list = read_word_list(
+        "/Users/dhruvcharan/Desktop/dsa/12dicts-6.0.2/American/2of12.txt"
+    )
+    test_solver("ORACTLJSXNIU", word_list)
+    test_spell_bee_solver(word_list, "OZTANIC")
+
