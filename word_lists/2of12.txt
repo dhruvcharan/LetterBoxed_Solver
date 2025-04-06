@@ -22511,6 +22511,7 @@ misconceive
 misconceived
 misconception
 misconduct
+misconjugate
 misconstruction
 misconstrue
 miscount

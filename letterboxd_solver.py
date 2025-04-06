@@ -163,6 +163,7 @@ class GraphLetterBoxedSolver:
                 continue
             if self._all_letters_used(used_letters):
                 all_solutions.append(tuple(current_chain))
+                print("Found solution:", current_chain)
                 continue
             for next_word in self.graph[current_word]:
                 new_letters = set(next_word) - used_letters

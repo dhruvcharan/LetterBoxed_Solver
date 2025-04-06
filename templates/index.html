@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+  <head>
+    <title>NYT Puzzle Solver</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1>NYT Puzzle Solver</h1>
+
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %}
+
+      <form method="POST">
+        <label for="game_type">Puzzle Type:</label>
+        <select
+          name="game_type"
+          id="game_type"
+          required
+          onchange="toggleOptions(this.value)"
+        >
+          <option value="letterboxed">Letter Boxed</option>
+          <option value="spellbee">Spelling Bee</option>
+        </select>
+
+        <div id="inputSection">
+          <label for="letters">Puzzle Input:</label>
+          <input
+            type="text"
+            name="letters"
+            id="letters"
+            placeholder="e.g. TIAUWLDBYRMO or MAWRING"
+          />
+          <small id="inputHelp"
+            >12 letters, no spaces. Will be split into 4 sides of 3 letters
+            each.</small
+          >
+        </div>
+
+        <div id="randomSection" style="display: none">
+          <label>
+            <input
+              type="checkbox"
+              name="random"
+              id="randomCheckbox"
+              onchange="toggleInput(this.checked)"
+            />
+            Generate Random Puzzle
+          </label>
+
+          <label for="max_iters">Max Iterations:</label>
+          <input
+            type="number"
+            name="max_iters"
+            id="max_iters"
+            value="50"
+            min="1"
+          />
+        </div>
+
+        <div id="pathSection">
+          <label for="max_path">Max Path Length (Letter Boxed):</label>
+          <input
+            type="number"
+            name="max_path"
+            id="max_path"
+            max="6"
+            value="3"
+            min="1"
+          />
+        </div>
+
+        <input type="submit" value="Solve" />
+      </form>
+    </div>
+
+    <script>
+      function toggleOptions(puzzle) {
+        const isLetterBoxed = puzzle === "letterboxed";
+        document.getElementById("randomSection").style.display = isLetterBoxed
+          ? "block"
+          : "none";
+        document.getElementById("pathSection").style.display = isLetterBoxed
+          ? "block"
+          : "none";
+        document.getElementById("inputHelp").innerText = isLetterBoxed
+          ? "12 letters, no spaces. Will be split into 4 sides of 3 letters each."
+          : "7+ letters, first is the center. E.g. MAWRING";
+      }
+
+      function toggleInput(isRandom) {
+        document.getElementById("letters").disabled = isRandom;
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{{ game }} Results</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1>{{ game }} Results</h1>
+
+      {% if game == "Letter Boxed" %}
+      <ul>
+        {% for chain in solutions %}
+        <li>{{ chain|join(" → ") }} ({{ chain|length }} words)</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <ul>
+        {% for word, score in solutions.items() %}
+        <li>{{ word }} — Score: {{ score }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <a href="/">← Try another puzzle</a>
+    </div>
+  </body>
+</html>
