@@ -37,12 +37,11 @@ I plan on converting this into a Django Based WebApp that fetches the current pu
 
     - This command checks for any issues with the dependency graph or environment setup.
 
+4. Install Docker if you don't have it on your System
+
+5. Run docker-compose up --build
+
+6. Connect to your localhost server to play
+
 ---
 
-### Usage
-
-Run [main.py] using `uv` to ensure the correct virtual environment is activated:
-
-```sh
-uv run python main.py
-```
