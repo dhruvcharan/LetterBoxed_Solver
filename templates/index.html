@@ -1,100 +1,147 @@
-<!doctype html>
-<html>
-  <head>
-    <title>NYT Puzzle Solver</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-  </head>
-  <body>
-    <div class="container">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NYT Puzzle Solver</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <div class="logo">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 7 4 4 20 4 20 7"></polyline>
+          <line x1="9" y1="20" x2="15" y2="20"></line>
+          <line x1="12" y1="4" x2="12" y2="20"></line>
+          <path d="M5 12a7 7 0 0 1 14 0"></path>
+        </svg>
+      </div>
       <h1>NYT Puzzle Solver</h1>
-
+    </header>
+    
+    <main class="container">
       {% if error %}
-      <p class="error">{{ error }}</p>
+      <div class="alert error">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
       {% endif %}
-
-      <form method="POST">
-        <label for="game_type">Puzzle Type:</label>
-        <select
-          name="game_type"
-          id="game_type"
-          required
-          onchange="toggleOptions(this.value)"
-        >
-          <option value="letterboxed">Letter Boxed</option>
-          <option value="spellbee">Spelling Bee</option>
-        </select>
-
-        <div id="inputSection">
-          <label for="letters">Puzzle Input:</label>
-          <input
-            type="text"
-            name="letters"
-            id="letters"
-            placeholder="e.g. TIAUWLDBYRMO or MAWRING"
-          />
-          <small id="inputHelp"
-            >12 letters, no spaces. Will be split into 4 sides of 3 letters
-            each.</small
-          >
+      
+      <form method="POST" class="puzzle-form">
+        <div class="form-group">
+          <label for="game_type">Puzzle Type:</label>
+          <select name="game_type" id="game_type" required onchange="toggleOptions(this.value)" class="form-control">
+            <option value="letterboxed">Letter Boxed</option>
+            <option value="spellbee">Spelling Bee</option>
+          </select>
         </div>
-
-        <div id="randomSection" style="display: none">
-          <label>
-            <input
-              type="checkbox"
-              name="random"
-              id="randomCheckbox"
-              onchange="toggleInput(this.checked)"
-            />
+        
+        <div id="inputSection" class="form-group">
+          <label for="letters">Puzzle Input:</label>
+          <input type="text" name="letters" id="letters" class="form-control" placeholder="e.g. TIAUWLDBYRMO or MAWRING" required autocomplete="off">
+          <small id="inputHelp" class="form-text">12 letters, no spaces. Will be split into 4 sides of 3 letters each.</small>
+        </div>
+        
+        <div id="randomSection" class="form-group checkbox-group" style="display: none">
+          <label class="checkbox-container">
+            <input type="checkbox" name="random" id="randomCheckbox" onchange="toggleInput(this.checked)">
+            <span class="checkmark"></span>
             Generate Random Puzzle
           </label>
-
-          <label for="max_iters">Max Iterations:</label>
-          <input
-            type="number"
-            name="max_iters"
-            id="max_iters"
-            value="50"
-            min="1"
-          />
+          
+          <div class="form-group">
+            <label for="max_iters">Max Iterations:</label>
+            <input type="number" name="max_iters" id="max_iters" class="form-control" value="50" min="1">
+          </div>
         </div>
-
-        <div id="pathSection">
+        
+        <div id="pathSection" class="form-group">
           <label for="max_path">Max Path Length (Letter Boxed):</label>
-          <input
-            type="number"
-            name="max_path"
-            id="max_path"
-            max="6"
-            value="3"
-            min="1"
-          />
+          <div class="range-container">
+            <input type="range" name="max_path" id="max_path" class="range-input" min="1" max="6" value="3" oninput="updateRangeValue(this.value)">
+            <span id="max_path_value" class="range-value">3</span>
+          </div>
+          <small class="form-text">Higher values may take longer to process</small>
         </div>
-
-        <input type="submit" value="Solve" />
+        
+        <button type="submit" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          </svg>
+          Solve Puzzle
+        </button>
       </form>
-    </div>
-
-    <script>
-      function toggleOptions(puzzle) {
-        const isLetterBoxed = puzzle === "letterboxed";
-        document.getElementById("randomSection").style.display = isLetterBoxed
-          ? "block"
-          : "none";
-        document.getElementById("pathSection").style.display = isLetterBoxed
-          ? "block"
-          : "none";
-        document.getElementById("inputHelp").innerText = isLetterBoxed
-          ? "12 letters, no spaces. Will be split into 4 sides of 3 letters each."
-          : "7+ letters, first is the center. E.g. MAWRING";
+      
+      <div class="instructions">
+        <h2>How to Use</h2>
+        <div class="instruction-panels">
+          <div class="panel">
+            <h3>Letter Boxed</h3>
+            <p>Enter all 12 letters from the four sides of the NYT Letter Boxed puzzle. The solver will find chains of words that use all letters.</p>
+            <div class="example">
+              <div class="letter-box">
+                <div class="side top">T I A</div>
+                <div class="side right">U W L</div>
+                <div class="side bottom">D B Y</div>
+                <div class="side left">R M O</div>
+              </div>
+              <div class="input-example">Input: TIAUWLDBYRMO</div>
+            </div>
+          </div>
+          
+          <div class="panel">
+            <h3>Spelling Bee</h3>
+            <p>Enter the center letter first, followed by the outer six letters. The solver will find all valid words containing the center letter.</p>
+            <div class="example">
+              <div class="bee-diagram">
+                <div class="center">M</div>
+                <div class="outer">A</div>
+                <div class="outer">W</div>
+                <div class="outer">R</div>
+                <div class="outer">I</div>
+                <div class="outer">N</div>
+                <div class="outer">G</div>
+              </div>
+              <div class="input-example">Input: MAWRING</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    <footer>
+      <p>© 2025 NYT Puzzle Solver | Not affiliated with The New York Times</p>
+    </footer>
+  </div>
+  
+  <script>
+    function toggleOptions(puzzle) {
+      const isLetterBoxed = puzzle === "letterboxed";
+      document.getElementById("randomSection").style.display = isLetterBoxed ? "block" : "none";
+      document.getElementById("pathSection").style.display = isLetterBoxed ? "block" : "none";
+      document.getElementById("inputHelp").innerText = isLetterBoxed
+        ? "12 letters, no spaces. Will be split into 4 sides of 3 letters each."
+        : "7+ letters, first is the center. E.g. MAWRING";
+    }
+    
+    function toggleInput(isRandom) {
+      document.getElementById("letters").disabled = isRandom;
+      if (isRandom) {
+        document.getElementById("letters").classList.add("disabled");
+      } else {
+        document.getElementById("letters").classList.remove("disabled");
       }
-
-      function toggleInput(isRandom) {
-        document.getElementById("letters").disabled = isRandom;
-      }
-    </script>
-  </body>
+    }
+    
+    function updateRangeValue(value) {
+      document.getElementById("max_path_value").textContent = value;
+    }
+  </script>
+</body>
 </html>
