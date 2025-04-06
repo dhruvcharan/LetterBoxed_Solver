@@ -5,7 +5,7 @@ import string
 from collections import defaultdict, deque
 import time
 
-from flask import logging
+import logging
 import matplotlib.pyplot as plt
 import networkx as nx
 

@@ -10,4 +10,5 @@ dependencies = [
     "gunicorn>=23.0.0",
     "matplotlib>=3.10.1",
     "networkx>=3.4.2",
+    "pytest>=8.3.5",
 ]
