@@ -459,10 +459,55 @@ class SpellBeeSolver:
 
 
 def generate_random_box_edges():
-    """Generate a set of random input"""
-    letters = random.sample(string.ascii_uppercase,
-                            12)  
+    """Generate a set of random input with a reasonable number of vowels (3 to 5)"""
+    vowels = ['A', 'E', 'I', 'O', 'U']
+    consonants = [c for c in string.ascii_uppercase if c not in vowels]
+    
+    # Decide how many vowels to use (3, 4, or 5)
+    num_vowels = random.choice([3, 4, 5])
+    num_consonants = 12 - num_vowels
+    
+    selected_vowels = random.sample(vowels, num_vowels)
+    selected_consonants = random.sample(consonants, num_consonants)
+    
+    letters = selected_vowels + selected_consonants
+    random.shuffle(letters)
+    
     return [letters[i: i + 3] for i in range(0, 12, 3)]
+
+
+def generate_solvable_box_edges(word_list, max_attempts=1000):
+    """
+    Generate a set of random box edges that has at least one solution.
+    We try generating random boards and checking if they are solvable.
+    """
+    for _ in range(max_attempts):
+        edges = generate_random_box_edges()
+        solver = GraphLetterBoxedSolver(word_list, edges, max_path_length=3)
+        solutions = solver.solve_bfs()
+        if solutions:
+            return edges, solutions
+    # Fallback
+    return generate_random_box_edges(), []
+
+
+def generate_solvable_spellbee_letters(word_list):
+    """
+    Generate a Spelling Bee letters string (7 letters, first is center) 
+    that is guaranteed to have at least one pangram.
+    """
+    pangram_candidates = [
+        word for word in word_list 
+        if len(set(word)) == 7 and word.isalpha() and len(word) >= 7
+    ]
+    if not pangram_candidates:
+        letters = random.sample(string.ascii_uppercase, 7)
+        return "".join(letters)
+        
+    chosen_word = random.choice(pangram_candidates)
+    unique_letters = list(set(chosen_word))
+    random.shuffle(unique_letters)
+    return "".join(unique_letters)
 
 
 def test_spell_bee_solver(word_list, todays_word="MAWRING"):

@@ -55,6 +55,35 @@ def server_error(e):
     return render_template("error.html", error="Internal server error"), 500
 
 
+@app.route("/api/random_letterboxed")
+def api_random_letterboxed():
+    try:
+        from letterboxd_solver import generate_solvable_box_edges
+        box_edges, _ = generate_solvable_box_edges(word_list)
+        letters = "".join([l for edge in box_edges for l in edge])
+        return jsonify({"letters": letters})
+    except Exception as e:
+        logger.error(f"API random letterboxed failed: {e}")
+        from letterboxd_solver import generate_random_box_edges
+        box_edges = generate_random_box_edges()
+        letters = "".join([l for edge in box_edges for l in edge])
+        return jsonify({"letters": letters})
+
+
+@app.route("/api/random_spellbee")
+def api_random_spellbee():
+    try:
+        from letterboxd_solver import generate_solvable_spellbee_letters
+        letters = generate_solvable_spellbee_letters(word_list)
+        return jsonify({"letters": letters})
+    except Exception as e:
+        logger.error(f"API random spellbee failed: {e}")
+        import random
+        import string
+        letters = "".join(random.sample(string.ascii_uppercase, 7))
+        return jsonify({"letters": letters})
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     """Flask routing setup with improved error handling"""
@@ -111,8 +140,8 @@ def handle_letterboxed(letters_input, max_path, is_random):
     """Handle Letter Boxed game with error handling"""
     if is_random:
         try:
-            from letterboxd_solver import generate_random_box_edges
-            box_edges = generate_random_box_edges()
+            from letterboxd_solver import generate_solvable_box_edges
+            box_edges, _ = generate_solvable_box_edges(word_list)
             letters_input = "".join([letter for edge in box_edges for letter in edge])
         except Exception as e:
             logger.error(f"Failed to generate random letters: {e}")

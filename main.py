@@ -57,8 +57,8 @@ def main():
     parser.add_argument(
         "--max-iters",
         type=int,
-        default=50,
-        help="Maximum iterations for random test cases (default: 50).",
+        default=50000,
+        help="Maximum iterations for random test cases (default: 50000).",
     )
 
     args = parser.parse_args()

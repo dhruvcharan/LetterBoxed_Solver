@@ -61,7 +61,7 @@
           
           <div class="form-group">
             <label for="max_iters">Max Iterations:</label>
-            <input type="number" name="max_iters" id="max_iters" class="form-control" value="50" min="1">
+            <input type="number" name="max_iters" id="max_iters" class="form-control" value="50000" min="1">
           </div>
         </div>
         
@@ -148,58 +148,66 @@
     }
 
     function generateRandomLetterBoxed() {
-      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      let letters = alphabet.split("");
-      for (let i = letters.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [letters[i], letters[j]] = [letters[j], letters[i]];
-      }
-      const selected = letters.slice(0, 12).join("");
       const lettersInput = document.getElementById("letters");
+      lettersInput.value = "Generating solvable board...";
+      lettersInput.disabled = true;
       
-      document.getElementById("game_type").value = "letterboxed";
-      toggleOptions("letterboxed");
-      
-      lettersInput.value = selected;
-      lettersInput.disabled = false;
-      document.getElementById("randomCheckbox").checked = false;
-      lettersInput.classList.remove("disabled");
-      
-      // Pulse animation for visual feedback
-      lettersInput.focus();
-      lettersInput.style.transition = "none";
-      lettersInput.style.backgroundColor = "rgba(23, 71, 142, 0.15)";
-      setTimeout(() => {
-        lettersInput.style.transition = "background-color 0.4s ease";
-        lettersInput.style.backgroundColor = "white";
-      }, 50);
+      fetch("/api/random_letterboxed")
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById("game_type").value = "letterboxed";
+          toggleOptions("letterboxed");
+          
+          lettersInput.value = data.letters;
+          lettersInput.disabled = false;
+          document.getElementById("randomCheckbox").checked = false;
+          lettersInput.classList.remove("disabled");
+          
+          // Pulse animation for visual feedback
+          lettersInput.focus();
+          lettersInput.style.transition = "none";
+          lettersInput.style.backgroundColor = "rgba(23, 71, 142, 0.15)";
+          setTimeout(() => {
+            lettersInput.style.transition = "background-color 0.4s ease";
+            lettersInput.style.backgroundColor = "white";
+          }, 50);
+        })
+        .catch(err => {
+          console.error("Failed to generate solvable Letter Boxed board:", err);
+          lettersInput.value = "";
+          lettersInput.disabled = false;
+        });
     }
 
     function generateRandomSpellingBee() {
-      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      let letters = alphabet.split("");
-      for (let i = letters.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [letters[i], letters[j]] = [letters[j], letters[i]];
-      }
-      const selected = letters.slice(0, 7).join("");
       const lettersInput = document.getElementById("letters");
+      lettersInput.value = "Generating solvable board...";
+      lettersInput.disabled = true;
       
-      document.getElementById("game_type").value = "spellbee";
-      toggleOptions("spellbee");
-      
-      lettersInput.value = selected;
-      lettersInput.disabled = false;
-      lettersInput.classList.remove("disabled");
-      
-      // Pulse animation for visual feedback
-      lettersInput.focus();
-      lettersInput.style.transition = "none";
-      lettersInput.style.backgroundColor = "rgba(23, 71, 142, 0.15)";
-      setTimeout(() => {
-        lettersInput.style.transition = "background-color 0.4s ease";
-        lettersInput.style.backgroundColor = "white";
-      }, 50);
+      fetch("/api/random_spellbee")
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById("game_type").value = "spellbee";
+          toggleOptions("spellbee");
+          
+          lettersInput.value = data.letters;
+          lettersInput.disabled = false;
+          lettersInput.classList.remove("disabled");
+          
+          // Pulse animation for visual feedback
+          lettersInput.focus();
+          lettersInput.style.transition = "none";
+          lettersInput.style.backgroundColor = "rgba(23, 71, 142, 0.15)";
+          setTimeout(() => {
+            lettersInput.style.transition = "background-color 0.4s ease";
+            lettersInput.style.backgroundColor = "white";
+          }, 50);
+        })
+        .catch(err => {
+          console.error("Failed to generate solvable Spelling Bee board:", err);
+          lettersInput.value = "";
+          lettersInput.disabled = false;
+        });
     }
   </script>
 </body>
