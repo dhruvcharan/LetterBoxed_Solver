@@ -21,6 +21,8 @@ def is_valid_word(word, box_edges):
     Check if a word is valid according to the Letter Boxed rules.
     Specifically, check that no two consecutive letters are on the same edge.
     """
+    if word == "":
+        return True
     available_letters = {letter for edge in box_edges for letter in edge}
     if not set(word).issubset(available_letters):
         return False
@@ -43,7 +45,27 @@ def filter_valid_words(list_of_words, box_edges):
     Filters the word list to include only valid words that can be formed
     according to the Letter Boxed rules.
     """
-    return [word for word in list_of_words if is_valid_word(word, box_edges)]
+    available_letters = {letter for edge in box_edges for letter in edge}
+    letter_to_edge = {}
+    for i, edge in enumerate(box_edges):
+        for letter in edge:
+            letter_to_edge[letter] = i
+
+    valid = []
+    for word in list_of_words:
+        if not word:
+            continue
+        word_set = set(word)
+        if not word_set.issubset(available_letters):
+            continue
+        is_ok = True
+        for i in range(len(word) - 1):
+            if letter_to_edge.get(word[i]) == letter_to_edge.get(word[i + 1]):
+                is_ok = False
+                break
+        if is_ok:
+            valid.append(word)
+    return valid
 
 
 class GraphLetterBoxedSolver:
@@ -52,29 +74,56 @@ class GraphLetterBoxedSolver:
     """
 
     def __init__(self, list_of_words, box_edges, max_path_length=2):
+        self.box_edges = box_edges
+        self.available_letters = {letter for edge in box_edges for letter in edge}
+        self.letter_to_edge = {}
+        for i, edge in enumerate(box_edges):
+            for letter in edge:
+                self.letter_to_edge[letter] = i
+
         self.cleaned_word_list = [
             word.replace("-", "").replace(" ", "").replace("'", "")
             for word in list_of_words
         ]
+        
         # Filter the word list to include only valid words
-        self.valid_words = filter_valid_words(
-            self.cleaned_word_list, box_edges)
+        self.valid_words = self._filter_valid_words(self.cleaned_word_list)
         random.shuffle(self.valid_words)
         self.graph = self._build_graph(self.valid_words)
-        self.letters = set(
-            letter for word in self.valid_words for letter in word)
+        self.letters = self.available_letters
         self.max_path_length = max_path_length
-        # print("box_edges:", box_edges)
+
+    def _is_valid_word(self, word):
+        if not word:
+            return False
+        word_set = set(word)
+        if not word_set.issubset(self.available_letters):
+            return False
+        for i in range(len(word) - 1):
+            if self.letter_to_edge.get(word[i]) == self.letter_to_edge.get(word[i + 1]):
+                return False
+        return True
+
+    def _filter_valid_words(self, words):
+        return [word for word in words if self._is_valid_word(word)]
 
     def _build_graph(self, list_of_words):
         """
         Build a graph where each word is a node and there's an
         edge if one word can transition to another.
         """
+        words_by_start = defaultdict(list)
+        for word in list_of_words:
+            if word:
+                words_by_start[word[0]].append(word)
+
         graph = defaultdict(list)
         for word1 in list_of_words:
-            for word2 in list_of_words:
-                if word1 != word2 and word1[-1] == word2[0]:
+            if not word1:
+                continue
+            last_char = word1[-1]
+            for word2 in words_by_start.get(last_char, []):
+                if word1 != word2:
                     graph[word1].append(word2)
         return graph
 
@@ -130,17 +179,13 @@ class GraphLetterBoxedSolver:
             start_time = time.time()
 
         max_iterations = 1000000
-        time_limit = 30  # seconds
+        time_limit = 10  # seconds
 
         iterations += 1
         if iterations > max_iterations:
-            logging.warning(
-                f"DFS reached iteration limit for word: {current_word}")
             return []
 
         if iterations % 1000 == 0 and time.time() - start_time > time_limit:
-            logging.warning(
-                f"DFS timed out after {time_limit} seconds for word: {current_chain[0]}")
             return []
 
         if len(current_chain) > self.max_path_length:
@@ -162,16 +207,17 @@ class GraphLetterBoxedSolver:
 
         try:
             next_words = self.graph.get(current_word, [])
-
             for next_word in next_words:
+                if next_word in current_chain:
+                    continue
                 new_letters = set(next_word) - used_letters
-                if new_letters or not used_letters & set(next_word):
+                if new_letters or not (used_letters & set(next_word)):
                     new_used_letters = used_letters | set(next_word)
                     result = self._dfs(
                         next_word,
                         new_used_letters,
                         current_chain + [next_word],
-                        visited.copy(), 
+                        visited,
                         solution_fingerprints,
                         start_time,
                         iterations
@@ -179,12 +225,12 @@ class GraphLetterBoxedSolver:
                     all_solutions.extend(result)
 
                     if len(all_solutions) > 1000:  
-                        logging.info(
-                            f"Found {len(all_solutions)} solutions in DFS branch, stopping early")
                         break
 
         except Exception as e:
             logging.error(f"Error in DFS for chain {current_chain}: {str(e)}")
+        finally:
+            visited.remove(state_key)
 
         return all_solutions
 
@@ -217,7 +263,7 @@ class GraphLetterBoxedSolver:
                     logging.info(
                         f"DFS progress: {i}/{total_words} words processed, {elapsed:.2f}s elapsed")
 
-                if time.time() - overall_start_time > 600:  # 10 minute timeout
+                if time.time() - overall_start_time > 60:  # 1 minute timeout
                     logging.warning("Overall solve timeout reached")
                     break
 
@@ -225,10 +271,7 @@ class GraphLetterBoxedSolver:
                                       solution_fingerprints=solution_fingerprints)
 
                 for solution in solutions:
-                    solution_set = frozenset(solution)
-                    if solution_set not in solution_fingerprints:
-                        solution_fingerprints.add(solution_set)
-                        unique_solutions.append(solution)
+                    unique_solutions.append(solution)
 
                 if len(unique_solutions) >= 1000:  
                     logging.info(
@@ -249,15 +292,6 @@ class GraphLetterBoxedSolver:
             logging.warning(f"Invalid start word: {start_word}")
             return []
 
-        if not hasattr(self, 'graph') or not self.graph:
-            logging.error("Word graph not initialized")
-            return []
-
-        if not isinstance(self.max_path_length, int) or self.max_path_length <= 0:
-            logging.warning(
-                f"Invalid max_path_length: {self.max_path_length}, using default of 10")
-            self.max_path_length = 10
-
         # Queue entries: (current_word, used_letters, current_chain)
         queue = deque([(start_word, set(start_word), [start_word])])
         all_solutions = []
@@ -268,20 +302,16 @@ class GraphLetterBoxedSolver:
         max_queue_size = 100000   # Memory safety
 
         start_time = time.time()
-        time_limit = 30  # seconds
+        time_limit = 10  # seconds
 
         try:
             while queue and iterations < max_iterations:
                 iterations += 1
 
                 if iterations % 1000 == 0 and time.time() - start_time > time_limit:
-                    logging.warning(
-                        f"BFS timed out after {time_limit} seconds for word: {start_word}")
                     break
 
                 if len(queue) > max_queue_size:
-                    logging.warning(
-                        f"Queue size limit reached ({max_queue_size}) for word: {start_word}")
                     break
 
                 current_word, used_letters, current_chain = queue.popleft()
@@ -291,9 +321,6 @@ class GraphLetterBoxedSolver:
                     continue
                 visited.add(state_key)
 
-                if len(current_chain) > self.max_path_length:
-                    continue
-
                 if self._all_letters_used(used_letters):
                     solution_words = frozenset(current_chain)
                     if solution_words not in fingerprints:
@@ -301,17 +328,16 @@ class GraphLetterBoxedSolver:
                         all_solutions.append(tuple(current_chain))
                     continue
 
+                if len(current_chain) >= self.max_path_length:
+                    continue
+
                 next_words = self.graph.get(current_word, [])
                 for next_word in next_words:
                     new_letters = set(next_word) - used_letters
-                    if new_letters or not used_letters & set(next_word):
+                    if new_letters or not (used_letters & set(next_word)):
                         new_used_letters = used_letters | set(next_word)
                         new_chain = current_chain + [next_word]
                         queue.append((next_word, new_used_letters, new_chain))
-
-            if iterations >= max_iterations:
-                logging.warning(
-                    f"BFS reached iteration limit for word: {start_word}")
 
         except Exception as e:
             logging.error(f"Error in BFS for word {start_word}: {str(e)}")
@@ -319,35 +345,59 @@ class GraphLetterBoxedSolver:
         return all_solutions
 
     def solve_bfs(self):
-        """Solve using BFS from all possible starting words with improved resilience"""
+        """Solve using a global multi-source BFS from all possible starting words for optimal speed"""
         if not hasattr(self, 'valid_words') or not self.valid_words:
             logging.error("No valid words available")
             return set()
 
         all_solutions = set()
         fingerprints = set() 
-        total_words = len(self.valid_words)
-
-        progress_interval = max(1, total_words // 10)
-
+        
+        # Initialize queue with all valid starting words
+        queue = deque([(word, set(word), [word]) for word in self.valid_words])
+        visited = set()
+        
+        start_time = time.time()
+        time_limit = 30  # seconds
+        iterations = 0
+        max_iterations = 2000000
+        
         try:
-            for i, start_word in enumerate(self.valid_words):
-                if i % progress_interval == 0:
-                    logging.info(
-                        f"BFS progress: {i}/{total_words} words processed")
-
-                solutions = self._bfs(start_word)
-                for solution in solutions:
-                    solution_set = frozenset(solution)
+            while queue and iterations < max_iterations:
+                iterations += 1
+                
+                if iterations % 10000 == 0 and time.time() - start_time > time_limit:
+                    logging.warning(f"Global BFS timed out after {time_limit} seconds")
+                    break
+                    
+                current_word, used_letters, current_chain = queue.popleft()
+                
+                if self._all_letters_used(used_letters):
+                    solution_set = frozenset(current_chain)
                     if solution_set not in fingerprints:
                         fingerprints.add(solution_set)
-                        all_solutions.update(solutions)
-
-                if len(all_solutions) >= 1000:  
-                    logging.info(
-                        f"Found {len(all_solutions)} solutions, stopping early")
-                    break
-
+                        all_solutions.add(tuple(current_chain))
+                        if len(all_solutions) >= 1000:
+                            logging.info("Found 1000 solutions, stopping early")
+                            break
+                    continue
+                    
+                if len(current_chain) >= self.max_path_length:
+                    continue
+                    
+                state_key = (current_word, frozenset(used_letters))
+                if state_key in visited:
+                    continue
+                visited.add(state_key)
+                
+                next_words = self.graph.get(current_word, [])
+                for next_word in next_words:
+                    new_letters = set(next_word) - used_letters
+                    if new_letters or not (used_letters & set(next_word)):
+                        new_used_letters = used_letters | set(next_word)
+                        new_chain = current_chain + [next_word]
+                        queue.append((next_word, new_used_letters, new_chain))
+                        
         except Exception as e:
             logging.error(f"Error in solve_bfs: {str(e)}")
 
@@ -362,7 +412,6 @@ def unique_char_count(word):
     return len(set(word))
 
 
-# %%
 class SpellBeeSolver:
     """Solver Class for the NYTimes Spell Bee"""
 
@@ -424,15 +473,6 @@ def test_spell_bee_solver(word_list, todays_word="MAWRING"):
 
 
 def test_solver(todays_word, word_list):
-    # Test the LetterBoxd Solver
-    """box_edges = [
-        ["M", "R", "E"],  # Top edge
-        ["U", "F", "H"],  # Right edge
-        ["G", "S", "T"],  # Bottom edge
-        ["L", "A", "Y"],  # Left edge
-    ]"""
-    # Each box edge is a represented by continuous chars, so E1 is CURR_WORD[0:3] and so on
-
     box_edges = [list(todays_word[i: i + 3])
                  for i in range(0, len(todays_word), 3)]
 
@@ -446,7 +486,6 @@ def test_solver(todays_word, word_list):
         print(solution)
 
 
-# %%
 def generate_random_test_cases(max_iters, word_list):
     """Generate Some Test Cases to Check Behaviour"""
     iterations = 0
@@ -465,8 +504,10 @@ def generate_random_test_cases(max_iters, word_list):
 
 
 if __name__ == "__main__":
-    word_list = read_word_list(
-        "/Users/dhruvcharan/Desktop/dsa/12dicts-6.0.2/American/2of12.txt"
-    )
+    import os
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    word_list_path = os.path.join(base_dir, "word_lists", "2of12.txt")
+    word_list = read_word_list(word_list_path)
     test_solver("ORACTLJSXNIU", word_list)
     test_spell_bee_solver(word_list, "OZTANIC")
+

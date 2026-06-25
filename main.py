@@ -9,9 +9,10 @@ from letterboxd_solver import (
 
 
 def main():
-    word_list = read_word_list(
-        "/Users/dhruvcharan/Desktop/dsa/12dicts-6.0.2/American/2of12.txt"
-    )
+    import os
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    word_list_path = os.path.join(base_dir, "word_lists", "2of12.txt")
+    word_list = read_word_list(word_list_path)
 
     parser = argparse.ArgumentParser(
         description=(

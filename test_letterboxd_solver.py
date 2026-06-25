@@ -60,12 +60,15 @@ def test_read_word_list(tmp_path):
 def test_is_valid_word():
     box_edges = [["A", "B", "C"], ["D", "E", "F"]]
     
-    # Valid words - letters from different edges
-    assert is_valid_word("ABDEF", box_edges) == True
-    assert is_valid_word("FACE", box_edges) == True
-    assert is_valid_word("BFDAC", box_edges) == True
+    # Valid words - letters from different edges consecutively
+    assert is_valid_word("ADBE", box_edges) == True
+    assert is_valid_word("CF", box_edges) == True
+    assert is_valid_word("BEAD", box_edges) == True
     
     # Invalid: consecutive letters from same edge
+    assert is_valid_word("ABDEF", box_edges) == False
+    assert is_valid_word("FACE", box_edges) == False
+    assert is_valid_word("BFDAC", box_edges) == False
     assert is_valid_word("ABCDE", box_edges) == False
     assert is_valid_word("DEFAB", box_edges) == False
     
@@ -77,18 +80,20 @@ def test_is_valid_word():
     assert is_valid_word("", box_edges) == True  # Empty word is technically valid
     assert is_valid_word("A", box_edges) == True  # Single letter is valid
 
+
 def test_filter_valid_words():
     box_edges = [["A", "B", "C"], ["D", "E", "F"]]
-    words = ["ABDEF", "FACE", "ABCDE", "ABCX", "BAD", "FAB"]
+    words = ["ADBE", "CF", "ABCDE", "ABCX", "BAD", "FAB"]
     
     filtered = filter_valid_words(words, box_edges)
-    assert set(filtered) == {"ABDEF", "FACE", "BAD", "FAB"}
+    assert set(filtered) == {"ADBE", "CF"}
     
     # Test with empty word list
     assert filter_valid_words([], box_edges) == []
     
     # Test with no valid words
     assert filter_valid_words(["ABCC", "XXYZ"], box_edges) == []
+
 
 # Test GraphLetterBoxedSolver class methods
 def test_init(simple_solver, simple_box_edges):
@@ -106,6 +111,7 @@ def test_init(simple_solver, simple_box_edges):
     assert isinstance(simple_solver.letters, set)
     assert len(simple_solver.letters) > 0
 
+
 def test_init_with_special_chars():
     # Test initialization with words containing special characters
     box_edges = [["A", "B", "C"], ["D", "E", "F"]]
@@ -118,6 +124,7 @@ def test_init_with_special_chars():
     assert "CAT" in solver.cleaned_word_list
     assert "BAT" in solver.cleaned_word_list
 
+
 def test_build_graph(simple_word_list, simple_box_edges):
     solver = GraphLetterBoxedSolver(simple_word_list, simple_box_edges)
     graph = solver.graph
@@ -129,6 +136,7 @@ def test_build_graph(simple_word_list, simple_box_edges):
                 assert word2 in graph[word1], f"{word2} should be connected to {word1}"
             elif word1 != word2 and word1[-1] != word2[0]:
                 assert word2 not in graph[word1], f"{word2} should not be connected to {word1}"
+
 
 def test_all_letters_used(simple_solver):
     # Test with all letters
@@ -148,57 +156,58 @@ def test_all_letters_used(simple_solver):
         almost_all.pop()
         assert simple_solver._all_letters_used(almost_all) == False
 
+
 def test_dfs_basic(monkeypatch):
     """Test the _dfs method with a simple controlled example"""
     # Create a simple test graph where we know what the result should be
     box_edges = [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]]
-    words = ["ACD", "DEF", "FGA", "ABH"]
+    words = ["ACEG", "GBHD", "DFCA"]
     
     solver = GraphLetterBoxedSolver(words, box_edges, max_path_length=3)
     
     # Create a test environment where we know the graph structure
     test_graph = defaultdict(list)
-    test_graph["ACD"] = ["DEF"]
-    test_graph["DEF"] = ["FGA"]
-    test_graph["FGA"] = ["ABH"]
-    test_graph["ABH"] = ["ACD"]
+    test_graph["ACEG"] = ["GBHD"]
+    test_graph["GBHD"] = ["DFCA"]
+    test_graph["DFCA"] = ["ACEG"]
     
     # Override the solver's graph with our test graph
     monkeypatch.setattr(solver, "graph", test_graph)
     monkeypatch.setattr(solver, "letters", set("ABCDEFGH"))
     
-    # Start DFS from "ACD"
-    results = solver._dfs("ACD", set("ACD"), ["ACD"], set())
+    # Start DFS from "ACEG"
+    results = solver._dfs("ACEG", set("ACEG"), ["ACEG"], set())
     
     # We expect to find a solution that covers all letters
-    expected_path = ("ACD", "DEF", "FGA")
+    expected_path = ("ACEG", "GBHD", "DFCA")
     assert any(path[:3] == expected_path for path in results)
+
 
 def test_dfs_max_depth(monkeypatch):
     """Test that _dfs respects max_path_length"""
     box_edges = [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]]
-    words = ["ACD", "DEF", "FGA", "ABH"]
+    words = ["ACEG", "GBHD", "DFCA"]
     
     # With max_path_length=2
     solver = GraphLetterBoxedSolver(words, box_edges, max_path_length=2)
     
     test_graph = defaultdict(list)
-    test_graph["ACD"] = ["DEF"]
-    test_graph["DEF"] = ["FGA"]
-    test_graph["FGA"] = ["ABH"]
-    test_graph["ABH"] = ["ACD"]
+    test_graph["ACEG"] = ["GBHD"]
+    test_graph["GBHD"] = ["DFCA"]
+    test_graph["DFCA"] = ["ACEG"]
     
     monkeypatch.setattr(solver, "graph", test_graph)
     monkeypatch.setattr(solver, "letters", set("ABCDEFGH"))
     
     # DFS should not go deeper than max_path_length
-    results = solver._dfs("ACD", set("ACD"), ["ACD"], set())
+    results = solver._dfs("ACEG", set("ACEG"), ["ACEG"], set())
     
     # No solution should exist with just 2 words
     assert len(results) == 0
 
+
 def test_dfs_pruning(monkeypatch):
-    """Test that _dfs correctly prunes paths already explored"""
+    """Test that _dfs correctly handles cycles and does not stack overflow"""
     box_edges = [["A", "B"], ["C", "D"]]
     words = ["AC", "CB", "BD", "DA"]
     
@@ -213,19 +222,18 @@ def test_dfs_pruning(monkeypatch):
     monkeypatch.setattr(solver, "graph", test_graph)
     monkeypatch.setattr(solver, "letters", set("ABCD"))
     
-    # Using a test memo to see if pruning works
-    memo = {("AC", "CB"): [("AC", "CB", "BD")]}
+    visited = set()
+    results = solver._dfs("AC", {"A", "C"}, ["AC"], visited)
     
-    results = solver._dfs("AC", set("AC"), ["AC"], memo)
-    
-    # Should use the memoized result instead of recomputing
-    assert ("AC", "CB", "BD") in results
+    # Should terminate and find the cycle-free solution
+    assert results == [("AC", "CB", "BD")]
+
 
 def test_solve():
     """Test the solve method with a complete example"""
     box_edges = [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]]
-    # Create words that can form a valid solution
-    words = ["ACD", "DEF", "FGB", "BAH", "HCE"]
+    # Create words that can form a valid solution in 3 steps
+    words = ["ACEG", "GBHD", "DFCA"]
     
     solver = GraphLetterBoxedSolver(words, box_edges, max_path_length=3)
     solutions = solver.solve()
@@ -248,10 +256,11 @@ def test_solve():
             used_letters.update(set(word))
         assert used_letters == solver.letters
 
+
 def test_solve_bfs():
     """Test the solve_bfs method"""
     box_edges = [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]]
-    words = ["ACD", "DEF", "FGB", "BAH", "HCE"]
+    words = ["ACEG", "GBHD", "DFCA"]
     
     solver = GraphLetterBoxedSolver(words, box_edges, max_path_length=3)
     solutions = solver.solve_bfs()
@@ -274,20 +283,21 @@ def test_solve_bfs():
             used_letters.update(set(word))
         assert used_letters == solver.letters
 
+
 def test_bfs_method():
     """Test the _bfs method"""
     box_edges = [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]]
-    words = ["ACD", "DEF", "FGB", "BAH", "HCE"]
+    words = ["ACEG", "GBHD", "DFCA"]
     
     solver = GraphLetterBoxedSolver(words, box_edges, max_path_length=3)
     
     # Test BFS from a specific starting word
-    results = solver._bfs("ACD")
+    results = solver._bfs("ACEG")
     
     # Verify results
     assert len(results) > 0
     
-    # First result should be the shortest valid path
+    # First result should be a valid path
     first_solution = results[0]
     assert len(first_solution) <= solver.max_path_length
     
@@ -296,6 +306,7 @@ def test_bfs_method():
     for word in first_solution:
         used_letters.update(set(word))
     assert used_letters == solver.letters
+
 
 def test_empty_word_list():
     """Test behavior with empty word list"""
@@ -312,11 +323,12 @@ def test_empty_word_list():
     assert len(solver.solve()) == 0
     assert len(solver.solve_bfs()) == 0
 
+
 def test_no_solution_case():
     """Test when no solution exists"""
     box_edges = [["A", "B"], ["C", "D"], ["E", "F"], ["G", "H"]]
-    # Words that can't form a solution that covers all letters
-    words = ["ACD", "CDA", "ACE"]  # Only covers A, C, D, E
+    # Words that can't form a solution that covers all letters (no B, H, F, D, etc)
+    words = ["ACE", "CA", "AC"]
     
     solver = GraphLetterBoxedSolver(words, box_edges, max_path_length=3)
     
