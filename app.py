@@ -109,14 +109,23 @@ def index():
 
 def handle_letterboxed(letters_input, max_path, is_random):
     """Handle Letter Boxed game with error handling"""
+    if is_random:
+        try:
+            from letterboxd_solver import generate_random_box_edges
+            box_edges = generate_random_box_edges()
+            letters_input = "".join([letter for edge in box_edges for letter in edge])
+        except Exception as e:
+            logger.error(f"Failed to generate random letters: {e}")
+            return render_template(
+                "index.html",
+                error="Failed to generate a random puzzle. Please try again.",
+            )
+
     if len(letters_input) != 12:
         return render_template(
             "index.html",
             error="Letter Boxed requires exactly 12 letters.",
         )
-
-    if is_random:
-        return render_template("index.html", error="Random Not Supported Just Yet")
 
     try:
         box_edges = [list(letters_input[i : i + 3]) for i in range(0, 12, 3)]

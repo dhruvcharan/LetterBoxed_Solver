@@ -282,6 +282,13 @@ label {
   transform: translateY(-1px);
 }
 
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 550;
+  border-radius: var(--radius-sm);
+}
+
 /* Alert styles */
 .alert {
   padding: 1rem;

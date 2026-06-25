@@ -46,6 +46,10 @@
           <label for="letters">Puzzle Input:</label>
           <input type="text" name="letters" id="letters" class="form-control" placeholder="e.g. TIAUWLDBYRMO or MAWRING" required autocomplete="off">
           <small id="inputHelp" class="form-text">12 letters, no spaces. Will be split into 4 sides of 3 letters each.</small>
+          <div class="rapid-test-buttons" style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="generateRandomLetterBoxed()">🎲 Random Letter Boxed</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="generateRandomSpellingBee()">🎲 Random Spelling Bee</button>
+          </div>
         </div>
         
         <div id="randomSection" class="form-group checkbox-group" style="display: none">
@@ -141,6 +145,61 @@
     
     function updateRangeValue(value) {
       document.getElementById("max_path_value").textContent = value;
+    }
+
+    function generateRandomLetterBoxed() {
+      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let letters = alphabet.split("");
+      for (let i = letters.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [letters[i], letters[j]] = [letters[j], letters[i]];
+      }
+      const selected = letters.slice(0, 12).join("");
+      const lettersInput = document.getElementById("letters");
+      
+      document.getElementById("game_type").value = "letterboxed";
+      toggleOptions("letterboxed");
+      
+      lettersInput.value = selected;
+      lettersInput.disabled = false;
+      document.getElementById("randomCheckbox").checked = false;
+      lettersInput.classList.remove("disabled");
+      
+      // Pulse animation for visual feedback
+      lettersInput.focus();
+      lettersInput.style.transition = "none";
+      lettersInput.style.backgroundColor = "rgba(23, 71, 142, 0.15)";
+      setTimeout(() => {
+        lettersInput.style.transition = "background-color 0.4s ease";
+        lettersInput.style.backgroundColor = "white";
+      }, 50);
+    }
+
+    function generateRandomSpellingBee() {
+      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let letters = alphabet.split("");
+      for (let i = letters.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [letters[i], letters[j]] = [letters[j], letters[i]];
+      }
+      const selected = letters.slice(0, 7).join("");
+      const lettersInput = document.getElementById("letters");
+      
+      document.getElementById("game_type").value = "spellbee";
+      toggleOptions("spellbee");
+      
+      lettersInput.value = selected;
+      lettersInput.disabled = false;
+      lettersInput.classList.remove("disabled");
+      
+      // Pulse animation for visual feedback
+      lettersInput.focus();
+      lettersInput.style.transition = "none";
+      lettersInput.style.backgroundColor = "rgba(23, 71, 142, 0.15)";
+      setTimeout(() => {
+        lettersInput.style.transition = "background-color 0.4s ease";
+        lettersInput.style.backgroundColor = "white";
+      }, 50);
     }
   </script>
 </body>
