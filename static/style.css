@@ -381,9 +381,9 @@ label {
 .bee-diagram {
   display: grid;
   grid-template-areas:
-    ". a b ."
+    "a . b"
     "f center c"
-    ". e d .";
+    "e . d";
   width: 150px;
   height: 150px;
   margin: 1rem 0;
